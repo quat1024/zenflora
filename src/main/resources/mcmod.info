@@ -1,0 +1,16 @@
+[
+{
+  "modid": "zenflora",
+  "name": "ZenFlora",
+  "description": "Make your own Botania flowers!",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["quaternary"],
+  "credits": "Taw's mod Morechids, for the proof-of-concept",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
