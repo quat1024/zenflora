@@ -11,6 +11,7 @@ import crafttweaker.api.world.IWorld;
 import quaternary.zenflora.IFlower;
 import quaternary.zenflora.ZenFlora;
 import quaternary.zenflora.annotation.Extends;
+import quaternary.zenflora.annotation.Mirrors;
 import stanhebben.zenscript.annotations.Optional;
 import stanhebben.zenscript.annotations.ZenClass;
 import stanhebben.zenscript.annotations.ZenConstructor;
@@ -41,6 +42,7 @@ public class GenericFlowerTemplate {
 	//////////////////////////////////////////////////
 	
 	@ZenProperty
+	@Mirrors
 	public OnUpdate onUpdate;
 	
 	@ZenRegister
@@ -60,6 +62,7 @@ public class GenericFlowerTemplate {
 	//////////////////////////////////////////////////
 	
 	@ZenProperty
+	@Mirrors("writeToPacketNBT")
 	public WriteToNBT writeToNBT;
 	
 	@ZenRegister
@@ -79,6 +82,7 @@ public class GenericFlowerTemplate {
 	//////////////////////////////////////////////////
 	
 	@ZenProperty
+	@Mirrors("readFromPacketNBT")
 	public ReadFromNBT readFromNBT;
 	
 	@ZenRegister
@@ -98,6 +102,7 @@ public class GenericFlowerTemplate {
 	//////////////////////////////////////////////////
 	
 	@ZenProperty
+	@Mirrors
 	public GetUnlocalizedName getUnlocalizedName;
 	
 	@ZenRegister
@@ -117,6 +122,7 @@ public class GenericFlowerTemplate {
 	//////////////////////////////////////////////////
 	
 	@ZenProperty
+	@Mirrors
 	public OnWanded onWanded;
 	
 	@ZenRegister
@@ -136,6 +142,7 @@ public class GenericFlowerTemplate {
 	//////////////////////////////////////////////////
 	
 	@ZenProperty
+	@Mirrors
 	public OnBlockPlacedBy onBlockPlacedBy;
 	
 	@ZenRegister
@@ -155,6 +162,7 @@ public class GenericFlowerTemplate {
 	//////////////////////////////////////////////////
 	
 	@ZenProperty
+	@Mirrors
 	public OnBlockActivated onBlockActivated;
 	
 	@ZenRegister
@@ -174,6 +182,7 @@ public class GenericFlowerTemplate {
 	//////////////////////////////////////////////////
 	
 	@ZenProperty
+	@Mirrors
 	public GetPowerLevel getPowerLevel;
 	
 	@ZenRegister

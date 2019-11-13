@@ -17,8 +17,10 @@ import quaternary.zenflora.Util;
 import quaternary.zenflora.templates.GenericFlowerTemplate;
 import vazkii.botania.api.subtile.SubTileEntity;
 
-public abstract class GenericFlower extends SubTileEntity implements IFlower {
-	protected GenericFlower(String name, boolean isMini) {
+//Only using this right now for ASM bytecode reference purposes.
+//I will delete this later, I take a different approach.
+public abstract class UnusedGenericFlower extends SubTileEntity implements IFlower {
+	protected UnusedGenericFlower(String name, boolean isMini) {
 		this.template = GeneratedClassSupport.retrieveTemplate(name);
 		this.isMini = isMini;
 	}
@@ -136,7 +138,7 @@ public abstract class GenericFlower extends SubTileEntity implements IFlower {
 		);
 	}
 	
-	@Override
+	//@Override
 	public void syncZen() {
 		sync();
 	}
