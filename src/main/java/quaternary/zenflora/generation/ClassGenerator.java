@@ -1,6 +1,8 @@
 package quaternary.zenflora.generation;
 
 import net.minecraft.launchwrapper.Launch;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.ClassReader;
@@ -70,9 +72,13 @@ public class ClassGenerator implements Opcodes {
 	private Type generatedSuperclassType;
 	private Type templateClassType;
 	
+	private Class<? extends SubTileEntity> superClass;
+	
 	public Class<? extends SubTileEntity> doIt() {
 		generatedClassType = Type.getObjectType("quaternary/zenflora/generated/" + name);
-		generatedSuperclassType = Type.getType(flowerTemplateClass.getAnnotation(Extends.class).value());
+		//noinspection unchecked
+		superClass = flowerTemplateClass.getAnnotation(Extends.class).value();
+		generatedSuperclassType = Type.getType(superClass);
 		
 		gen.name = generatedClassType.getInternalName();
 		gen.superName = generatedSuperclassType.getInternalName();
@@ -117,8 +123,9 @@ public class ClassGenerator implements Opcodes {
 			throw new RuntimeException("Problem reflecting a flower template idk " + name, e);
 		}
 		
-		GeneratedClassSupport.storeTemplate(name, flowerTemplate);
+		implementIFlower();
 		
+		GeneratedClassSupport.storeTemplate(name, flowerTemplate);
 		return writeAndLoadClass();
 	}
 	
@@ -328,6 +335,37 @@ public class ClassGenerator implements Opcodes {
 		override.visitEnd();
 		simSuper.visitMaxs(-1, -1);
 		simSuper.visitEnd();
+	}
+	
+	public void implementIFlower() {
+		//Hardcoded for now, TODO switch to an annotation based system
+		MethodVisitor getWorldZen = gen.visitMethod(
+			ACC_PUBLIC,
+			"getWorldZen",
+			"()Lcrafttweaker/api/world/IWorld;",
+			null, null
+		);
+		
+		getWorldZen.visitCode();
+		getWorldZen.visitVarInsn(ALOAD, 0);
+		getWorldZen.visitFieldInsn(
+			GETFIELD,
+			Type.getInternalName(SubTileEntity.class),
+			"supertile",
+			Type.getDescriptor(TileEntity.class)
+		);
+		getWorldZen.visitMethodInsn(
+			INVOKEVIRTUAL,
+			Type.getInternalName(TileEntity.class),
+			"getWorld",
+			Type.getMethodDescriptor(Type.getType(World.class)),
+			false
+		);
+		TypeLifter.genLifting(Type.getType(World.class), getWorldZen);
+		getWorldZen.visitInsn(ARETURN);
+		
+		getWorldZen.visitMaxs(-1, -1);
+		getWorldZen.visitEnd();
 	}
 	
 	public Class<? extends SubTileEntity> writeAndLoadClass() {
