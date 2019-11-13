@@ -18,12 +18,9 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.InsnNode;
-import org.objectweb.asm.tree.MethodInsnNode;
-import org.objectweb.asm.tree.TypeInsnNode;
 
 /**
  * Some classes are represented differently in the CraftTweaker world and the Minecraft world.
@@ -57,50 +54,50 @@ public class TypeLifter implements Opcodes {
 	private static final String CRAFTTWEAKERMC_INTERNAL_NAME = Type.getInternalName(CraftTweakerMC.class);
 	private static final String IFACING_INTERNAL_NAME = Type.getInternalName(IFacing.class);
 	
-	public static Type genCrafttweakizingCode(Type type, InsnList list) {
+	public static Type genLifting(Type type, MethodVisitor method) {
 		int typeType = type.getSort(); //They call it a "sort" because well, are you gonna call it a "type"?
 		//TODO: Missing support for array and method types
 		if(typeType != Type.OBJECT) return type;
 		
 		if(type.equals(NBTTAGCOMPOUND)) {
-			callCTMC(list, "getIDataModifyable", NBTBASE, IDATA);
+			callCTMC(method, "getIDataModifyable", NBTBASE, IDATA);
 			return IDATA;
 		} else if(type.equals(ENTITYPLAYER)) {
-			callCTMC(list, "getIPlayer", ENTITYPLAYER, IPLAYER);
+			callCTMC(method, "getIPlayer", ENTITYPLAYER, IPLAYER);
 			return IPLAYER;
 		} else if(type.equals(ITEMSTACK)) {
-			callCTMC(list, "getIItemStack", ITEMSTACK, IITEMSTACK);
+			callCTMC(method, "getIItemStack", ITEMSTACK, IITEMSTACK);
 			return IITEMSTACK;
 		} else if(type.equals(WORLD)) {
-			callCTMC(list, "getIWorld", WORLD, IWORLD);
+			callCTMC(method, "getIWorld", WORLD, IWORLD);
 			return IWORLD;
 		} else if(type.equals(BLOCKPOS)) {
-			callCTMC(list, "getIBlockPos", BLOCKPOS, IBLOCKPOS);
+			callCTMC(method, "getIBlockPos", BLOCKPOS, IBLOCKPOS);
 			return IBLOCKPOS;
 		} else if(type.equals(IBLOCKSTATE_MC)) {
-			callCTMC(list, "getBlockState", IBLOCKSTATE_MC, IBLOCKSTATE_CT);
+			callCTMC(method, "getBlockState", IBLOCKSTATE_MC, IBLOCKSTATE_CT);
 			return IBLOCKSTATE_CT;
 		} else if(type.equals(ENTITYLIVINGBASE)) {
-			callCTMC(list, "getIEntityLivingBase", ENTITYLIVINGBASE, IENTITYLIVINGBASE);
+			callCTMC(method, "getIEntityLivingBase", ENTITYLIVINGBASE, IENTITYLIVINGBASE);
 			return IENTITYLIVINGBASE;
 		} else if(type.equals(ENUMFACING)) {
-			callCTMC(list, "getIFacing", ENUMFACING, IFACING);
+			callCTMC(method, "getIFacing", ENUMFACING, IFACING);
 			return IFACING;
 		} else if(type.equals(ENUMHAND)) {
 			//Grab the ordinal of the hand
-			list.add(new MethodInsnNode(
+			method.visitMethodInsn(
 				INVOKEVIRTUAL,
 				ENUMHAND_INTERNAL_NAME,
 				"ordinal",
 				Type.getMethodDescriptor(Type.INT_TYPE),
 				false
-			));
+			);
 			//0 is main hand 1 is off hand... I want the other way
 			//Push a 1 underneath
-			list.add(new InsnNode(ICONST_1));
-			list.add(new InsnNode(SWAP));
+			method.visitInsn(ICONST_1);
+			method.visitInsn(SWAP);
 			//Subtract
-			list.add(new InsnNode(ISUB));
+			method.visitInsn(ISUB);
 			//Now it (should be) correct
 			return Type.BOOLEAN_TYPE;
 		}
@@ -108,76 +105,74 @@ public class TypeLifter implements Opcodes {
 		return type; //assume this type doesn't need any crafttweakizing (like a float or whatever)
 	}
 	
-	/**
-	 * Call this with the *vanilla* destination type.
+	/*
+		Call this with the *Minecraft* type, not the CT one (i.e. call this with the type you want it to return)
+		Reason being not all Minecraft types map to a CT type (like EnumHand doesn't map to anything).
+		In those cases I need to use a different type. I used boolean, true if you're in the main hand
+		But since boolean is such a nonspecific type there might be more than one type that needs to map that way.
 	 */
-	public static InsnList uncrafttweakizeType(Type type) {
-		InsnList list = new InsnList();
+	public static void genUnlifting(Type type, MethodVisitor method) {
 		//It's a primitive type! No munging needed
-		if(type.getDescriptor().length() == 1) return list;
+		if(type.getDescriptor().length() == 1) return;
 		
 		if(type.equals(NBTTAGCOMPOUND)) {
-			return callCTMC(list, "getNBTCompound", IDATA, NBTTAGCOMPOUND);
+			callCTMC(method, "getNBTCompound", IDATA, NBTTAGCOMPOUND);
 		} else if(type.equals(ENTITYPLAYER)) {
-			return callCTMC(list, "getPlayer", IPLAYER, ENTITYPLAYER);
+			callCTMC(method, "getPlayer", IPLAYER, ENTITYPLAYER);
 		} else if(type.equals(ITEMSTACK)) {
-			return callCTMC(list, "getItemStack", IITEMSTACK, ITEMSTACK);
+			callCTMC(method, "getItemStack", IITEMSTACK, ITEMSTACK);
 		} else if(type.equals(WORLD)) {
-			return callCTMC(list, "getWorld", IWORLD, WORLD);
+			callCTMC(method, "getWorld", IWORLD, WORLD);
 		} else if(type.equals(BLOCKPOS)) {
-			return callCTMC(list, "getBlockPos", IBLOCKPOS, BLOCKPOS);
+			callCTMC(method, "getBlockPos", IBLOCKPOS, BLOCKPOS);
 		} else if(type.equals(IBLOCKSTATE_MC)) {
-			return callCTMC(list, "getBlockState", IBLOCKSTATE_CT, IBLOCKSTATE_MC);
+			callCTMC(method, "getBlockState", IBLOCKSTATE_CT, IBLOCKSTATE_MC);
 		} else if(type.equals(ENTITYLIVINGBASE)) {
-			return callCTMC(list, "getEntityLivingBase", IENTITYLIVINGBASE, ENTITYLIVINGBASE);
+			callCTMC(method, "getEntityLivingBase", IENTITYLIVINGBASE, ENTITYLIVINGBASE);
 		} else if(type.equals(ENUMFACING)) {
 			//Probably due to a mistake, there's no CTMC methods to turn an IFacing back into an EnumFacing.
 			//Luckily we can just grab the Object from the interface's methods:
-			list.add(new MethodInsnNode(
+			method.visitMethodInsn(
 				INVOKEINTERFACE,
 				IFACING_INTERNAL_NAME,
 				"getInternal",
 				Type.getMethodDescriptor(Type.getType(Object.class)),
 				true
-			));
+			);
 			//...and cast it to EnumFacing
-			list.add(new TypeInsnNode(
+			method.visitTypeInsn(
 				CHECKCAST,
-				ENUMFACING.getDescriptor()
-			));
-			return list;
+				ENUMFACING.getInternalName()
+			);
 		} else if(type.equals(ENUMHAND)) {
 			//What's actually on the stack rn is a boolean 0 or 1, 1 if it's the main hand
-			//Turn this into an ordinal
-			list.add(new InsnNode(ICONST_1));
-			list.add(new InsnNode(SWAP));
-			list.add(new InsnNode(ISUB));
+			//Push a 1 underneath
+			method.visitInsn(ICONST_1);
+			method.visitInsn(SWAP);
+			//Subtract
+			method.visitInsn(ISUB);
 			//Grab values()
-			list.add(new MethodInsnNode(
+			method.visitMethodInsn(
 				INVOKESTATIC,
 				ENUMHAND_INTERNAL_NAME,
 				"values",
 				"()[" + ENUMHAND.getDescriptor(), //Type doesn't seem to let you arrayize a type?! Ok I'll do it myself then
 				false
-			));
+			);
 			//Index the array
-			list.add(new InsnNode(SWAP));
-			list.add(new InsnNode(AALOAD));
+			method.visitInsn(SWAP);
+			method.visitInsn(AALOAD);
 			//Now an enumhand is on the stack... we did it reddit
-			return list;
 		}
-		
-		return list;
 	}
 	
-	private static InsnList callCTMC(InsnList list, String name, Type source, Type dest) {
-		list.add(new MethodInsnNode(
+	private static void callCTMC(MethodVisitor list, String name, Type source, Type dest) {
+		list.visitMethodInsn(
 			INVOKESTATIC,
 			CRAFTTWEAKERMC_INTERNAL_NAME,
 			name,
 			Type.getMethodDescriptor(dest, source),
 			false
-		));
-		return list;
+		);
 	}
 }
